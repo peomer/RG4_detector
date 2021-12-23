@@ -57,133 +57,6 @@ def trim_seq(array,how_much):
     trim = array.apply([lambda x :x.str.slice(from_idx,to_idx)])
     return trim
 
-# def get_data(path, min_read=2000,add_RNAplfold =False,export_np_arr=False,load_np_arr=False):
-#     # train
-#     if load_np_arr:
-#         #Train
-#         X_train = np.load(path+"/np_data/X_train_np.npy")
-#         y_train = np.load(path+"/np_data/y_train_np.npy")
-#         w_train = np.load(path + "/np_data/w_train_np.npy")
-#         # Test
-#         X_test = np.load(path + "/np_data/X_test_np.npy")
-#         y_test = np.load(path + "/np_data/y_test_np.npy")
-#         w_test = np.load(path + "/np_data/w_test_np.npy")
-#         # Val
-#         X_val = np.load(path + "/np_data/X_val_np.npy")
-#         y_val = np.load(path + "/np_data/y_val_np.npy")
-#         w_val = np.load(path + "/np_data/w_val_np.npy")
-#
-#     else:
-#         with open(path+  "/seq/train-seq") as source:
-#             X_train = np.array(list(map(one_hot_enc, source)))
-#         y_train = pd.read_csv(path + '/csv_data/train_data.csv', usecols=['rsr']).to_numpy()
-#         w_train = pd.read_csv(path + '/csv_data/train_data.csv', usecols=['c_read']).to_numpy() + \
-#               pd.read_csv(path + '/csv_data/train_data.csv', usecols=['t_read']).to_numpy()
-#         chr_train = pd.read_csv(path + '/csv_data/train_data.csv', usecols=['chromosome']).to_numpy()
-#         pos_train = pd.read_csv(path + '/csv_data/train_data.csv', usecols=['position']).to_numpy()
-#         strand_train = pd.read_csv(path + '/csv_data/train_data.csv', usecols=['strand']).to_numpy()
-#         # validation
-#         with open(path+  "/seq/val-seq") as source:
-#             X_val =  np.array(list(map(one_hot_enc, source)))
-#         y_val = pd.read_csv(path + '/csv_data/val_data.csv', usecols=['rsr']).to_numpy()
-#         w_val = pd.read_csv(path + '/csv_data/val_data.csv', usecols=['c_read']).to_numpy() +\
-#             pd.read_csv(path + '/csv_data/val_data.csv', usecols=['t_read']).to_numpy()
-#         chr_val = pd.read_csv(path + '/csv_data/val_data.csv', usecols=['chromosome']).to_numpy()
-#         pos_val = pd.read_csv(path + '/csv_data/val_data.csv', usecols=['position']).to_numpy()
-#         strand_val = pd.read_csv(path + '/csv_data/val_data.csv', usecols=['strand']).to_numpy()
-#         # test
-#         with open(path+  "/seq/test-seq") as source:
-#             X_test = np.array(list(map(one_hot_enc, source)))
-#         y_test = pd.read_csv(path + '/csv_data/test_data.csv', usecols=['rsr']).to_numpy()
-#         w_test = pd.read_csv(path + '/csv_data/test_data.csv', usecols=['c_read']).to_numpy() + \
-#                  pd.read_csv(path + '/csv_data/test_data.csv', usecols=['t_read']).to_numpy()
-#         chr_test = pd.read_csv(path + '/csv_data/test_data.csv', usecols=['chromosome']).to_numpy()
-#         pos_test = pd.read_csv(path + '/csv_data/test_data.csv', usecols=['position']).to_numpy()
-#         strand_test = pd.read_csv(path + '/csv_data/test_data.csv', usecols=['strand']).to_numpy()
-#
-#         # set val min read
-#         ids = np.argwhere(w_val > min_read)[:, 0]
-#         X_val = X_val[ids]
-#         y_val = y_val[ids]
-#         w_val = w_val[ids]
-#
-#         ids = np.argwhere(w_test > min_read)[:, 0]
-#         X_test = X_test[ids]
-#         y_test = y_test[ids]
-#         w_test = w_test[ids]
-#         # scale_labels
-#         y_train = np.log(y_train)
-#         y_test = np.log(y_test)
-#         y_val = np.log(y_val)
-#
-#     if (add_RNAplfold):
-#         X_new = []
-#         for i in range(len(X_train)):
-#             plfold_name = ""
-#             a = str(chr_train[i])[2:-2]
-#             b = str(pos_train[i] - 140)[1:-1]
-#             c = str(pos_train[i] + 110)[1:-1]
-#             d = str(strand_train[i])[2:-2]
-#             e = ')_lunp\_clean'
-#             plfold_name = a + '_' + b + '-' + c + '(' + d + e
-#             with open(path + "/plfold/train_plfold/" + plfold_name) as source:
-#                 pl_train = np.array(list(source))
-#             pl_train = pl_train.astype(float)
-#             #pl_train1 = pd.read_csv(path + '/train_plfold/' + plfold_name).to_numpy()
-#             temp = X_train[i]
-#             temp = np.column_stack((temp, pl_train))
-#             X_new.append(temp)
-#         X_train = np.array(X_new)
-#         X_new = []
-#         for i in range(len(X_val)):
-#             plfold_name = ""
-#             a = str(chr_val[i])[2:-2]
-#             b = str(pos_val[i] - 140)[1:-1]
-#             c = str(pos_val[i] + 110)[1:-1]
-#             d = str(strand_val[i])[2:-2]
-#             e = ')_lunp\_clean'
-#             plfold_name = a + '_' + b + '-' + c + '(' + d + e
-#             with open(path + "/plfold/val_plfold/" + plfold_name) as source:
-#                 pl_val = np.array(list(source))
-#             pl_val = pl_val.astype(float)
-#             #pl_train = pd.read_csv(path + '/val_plfold/' + plfold_name).to_numpy()
-#             temp = X_val[i]
-#             temp = np.column_stack((temp, pl_val))
-#             X_new.append(temp)
-#         X_val = np.array(X_new)
-#         X_new = []
-#         for i in range(len(X_test)):
-#             plfold_name = ""
-#             a = str(chr_test[i])[2:-2]
-#             b = str(pos_test[i] - 140)[1:-1]
-#             c = str(pos_test[i] + 110)[1:-1]
-#             d = str(strand_test[i])[2:-2]
-#             e = ')_lunp\_clean'
-#             plfold_name = a + '_' + b + '-' + c + '(' + d + e
-#             with open(path + "/plfold/test_plfold/" + plfold_name) as source:
-#                 pl_test = np.array(list(source))
-#             pl_test = pl_test.astype(float)
-#             #pl_train = pd.read_csv(path + '/test_plfold/' + plfold_name).to_numpy()
-#             temp = X_test[i]
-#             temp = np.column_stack((temp, pl_test))
-#             X_new.append(temp)
-#         X_test = np.array(X_new)
-#
-#
-#     if export_np_arr :
-#         np.save(path + "/np_data/X_train_np.npy",X_train)
-#         np.save(path + "/np_data/y_train_np", y_train)
-#         np.save(path + "/np_data/w_train_np", w_train)
-#
-#         np.save(path + "/np_data/X_test_np", X_test)
-#         np.save(path + "/np_data/y_test_np", y_test)
-#         np.save(path + "/np_data/w_test_np", w_test)
-#
-#         np.save(path + "/np_data/X_val_np", X_val)
-#         np.save(path + "/np_data/y_val_np", y_val)
-#         np.save(path + "/np_data/w_val_np", w_val)
-#
-#     return [X_train, y_train, w_train], [X_test, y_test, w_test], [X_val, y_val, w_val]
 def get_data(path, min_read=2000,add_RNAplfold =False,export_np_arr=False,load_np_arr=False,add_evulution=False,add_mfe=False):
     # train
     if load_np_arr:
@@ -640,7 +513,6 @@ def update_results_params(i=0,hparams=HyperParams()):
     Results_pd.at[i, 'BATCH_SIZE'] = hparams.BATCH_SIZE
     Results_pd.at[i, 'CONV_PADDING'] = hparams.CONV_PADDING
 
-
 def predict_results(model=Sequential(),X=None,Y=None):
     predictions = model.predict(X, batch_size=len(X))     # Batch_Size defualt is 32
     predictions = predictions.reshape(len(predictions))   # Reshape pred_val
@@ -669,23 +541,18 @@ def plot_loss_val(loss=None,val_loss=None,load_np_array=False):
 #---------------------------------------------- Configure Params -------------------------------------------------------
 
 import params
-Cloud_run = params.Cloud_run
 global Debug
-Debug= params.Debug
-save_model = params.save_model
-Load_model = params.save_model
-ITER      = 3
-param_scan = True
-Seed_scan = False
-compare_same_params = False
-add_mfe = False
-AVG_TF_SEED_AMOUNT = 3
-Show_plots =False
-Save_plots = True
-Data_run_list = ['seq','mfe','evo','plfold']
-# Data_run_list = ['mfe']
-Save_Results = True
-Use_Test = True
+Cloud_run          = params.Cloud_run
+Debug              = params.Debug
+save_model         = params.save_model
+Load_model         = params.save_model
+ITER               = params.ITER
+AVG_TF_SEED_AMOUNT = params.AVG_TF_SEED_AMOUNT
+Show_plots         = params.Show_plots
+Save_plots         = params.Save_plots
+Data_run_list      = params.Data_run_list
+Save_Results       = params.Save_Results
+Use_Test           = params.Use_Test
 
 if Cloud_run :
 
@@ -703,8 +570,8 @@ if Debug :
     VERBOSE = 1
 else :
     VERBOSE = 0
-    name = "plfold_vs_nonpl_scan_round_2"
-    runidx = input()
+    name = "mega_run_dry_run"
+    runidx = 1
     iterations = ITER
 #---------------------------------------------- Configure DataFrame ----------------------------------------------------
 # Results Data frame :
@@ -941,7 +808,10 @@ def main(param_scan=True,Seed_scan=False):
 
 
 if __name__ == "__main__":
-    main()
+    main(Seed_scan=False,param_scan=True)
+    print("Done with param scan")
+    #main(Seed_scan=True,param_scan=False)
+
 
 
 
