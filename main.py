@@ -1,13 +1,13 @@
 import os
 
-import tensorflow as tf
-from keras.losses import mse
-from tensorflow import keras
+# import tensorflow as tf
+# from keras.losses import mse
+# from tensorflow import keras
 from tensorflow.keras.models import Sequential, Model
 from keras.layers import Dense , Conv2D , Flatten ,Conv1D , MaxPooling1D , MaxPool1D
 from keras.layers import Dropout
-from tensorflow.keras.optimizers import Adam
-from scipy.stats.stats import pearsonr
+# from tensorflow.keras.optimizers import Adam
+# from scipy.stats.stats import pearsonr
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -390,10 +390,10 @@ class HyperParams:
         self.DENCE_2       = np.random.randint(4, 16) * 4
         self.ACTIVATION_1  = np.random.choice(self.activations_list)
         self.ACTIVATION_2  = 'relu'
-        self.DROPOUT_1     = np.random.randint(0, 8) * 0.1
-        self.DROPOUT_2     = np.random.randint(0, 8) * 0.1
+        self.DROPOUT_1     = np.random.randint(0, 7) * 0.1
+        self.DROPOUT_2     = np.random.randint(0, 7) * 0.1
         self.TF_SEED       = np.random.randint(10000)
-        self.EPOCH         = np.random.randint(3, 30)
+        self.EPOCH         = np.random.randint(5, 20)
         self.BATCH_SIZE    = np.random.randint(1, 10) * 8
 
     def print(self):
@@ -556,8 +556,8 @@ Use_Test           = params.Use_Test
 
 if Cloud_run :
 
-    # path = "/home/u110379/RG4_Proj/rg4_data"
-    path = "~/RG4_Proj/rg4_data"
+    path = "/home/u110379/RG4_Proj/rg4_data"
+    # path = "~/RG4_Proj/rg4_data"
     # path = "./rg4_data"
 else:
     path = "./rg4_data"
@@ -570,8 +570,8 @@ if Debug :
     VERBOSE = 1
 else :
     VERBOSE = 0
-    name = "mega_run_dry_run"
-    runidx = 1
+    name = "mega_run"
+    runidx = input()
     iterations = ITER
 #---------------------------------------------- Configure DataFrame ----------------------------------------------------
 # Results Data frame :
@@ -810,8 +810,6 @@ def main(param_scan=True,Seed_scan=False):
 if __name__ == "__main__":
     main(Seed_scan=False,param_scan=True)
     print("Done with param scan")
-    #main(Seed_scan=True,param_scan=False)
-
-
+    # main(Seed_scan=True,param_scan=False)
 
 
