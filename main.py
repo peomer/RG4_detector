@@ -41,7 +41,7 @@ def trim_seq(array, how_much):
     return trim
 
 def get_data(path, min_read=2000, add_RNAplfold=False, export_np_arr=False, load_np_arr=False, add_evolution=False,
-             add_mfe=False):
+             add_mfe=False,bartel=False):
     # train
     if load_np_arr:
         folder = "/np_data"
@@ -51,6 +51,8 @@ def get_data(path, min_read=2000, add_RNAplfold=False, export_np_arr=False, load
             folder = folder + "_mfe"
         if add_evolution:
             folder = folder + "_evo"
+        if bartel:
+            folder = folder + "_bar"
 
         # Train
         X_train = np.load(path + folder + "/X_train.npy")
@@ -73,7 +75,15 @@ def get_data(path, min_read=2000, add_RNAplfold=False, export_np_arr=False, load
         if add_mfe:
             mfe_val = np.load(path + folder + "/mfe_val.npy")
 
+        if bartel:
+            X_bartel = np.load(path+folder+'/X_bartel.npy')
+            Y_bartel = np.load(path+folder+'/Y_bartel.npy')
+
     else:
+        if bartel:
+            with open(path + "/seq/bartel_seq") as source:
+                X_bartel = np.array(list(map(one_hot_enc, source)))
+            Y_bartel = np.load(path +'/np_data_bar/labels.npy')
         with open(path + "/seq/train-seq") as source:
             X_train = np.array(list(map(one_hot_enc, source)))
         y_train = pd.read_csv(path + '/csv_data/train_data.csv', usecols=['rsr']).to_numpy()
@@ -130,6 +140,8 @@ def get_data(path, min_read=2000, add_RNAplfold=False, export_np_arr=False, load
         y_train = np.log(y_train)
         y_test = np.log(y_test)
         y_val = np.log(y_val)
+        if bartel:
+            Y_bartel = np.log(Y_bartel)
 
         if add_evolution:
             ref_dic = {}
@@ -200,7 +212,6 @@ def get_data(path, min_read=2000, add_RNAplfold=False, export_np_arr=False, load
         if (add_RNAplfold):
             X_new = []
             for i in range(len(X_train)):
-                plfold_name = ""
                 a = str(chr_train[i])[2:-2]
                 b = str(pos_train[i] - 140)
                 c = str(pos_train[i] + 110)
@@ -210,14 +221,12 @@ def get_data(path, min_read=2000, add_RNAplfold=False, export_np_arr=False, load
                 with open(path + "/plfold/train_plfold/" + plfold_name) as source:
                     pl_train = np.array(list(source))
                 pl_train = pl_train.astype(float)
-                # pl_train1 = pd.read_csv(path + '/train_plfold/' + plfold_name).to_numpy()
                 temp = X_train[i]
                 temp = np.column_stack((temp, pl_train))
                 X_new.append(temp)
             X_train = np.array(X_new)
             X_new = []
             for i in range(len(X_val)):
-                plfold_name = ""
                 a = str(chr_val[i])[2:-2]
                 b = str(pos_val[i] - 140)
                 c = str(pos_val[i] + 110)
@@ -227,14 +236,12 @@ def get_data(path, min_read=2000, add_RNAplfold=False, export_np_arr=False, load
                 with open(path + "/plfold/val_plfold/" + plfold_name) as source:
                     pl_val = np.array(list(source))
                 pl_val = pl_val.astype(float)
-                # pl_train = pd.read_csv(path + '/val_plfold/' + plfold_name).to_numpy()
                 temp = X_val[i]
                 temp = np.column_stack((temp, pl_val))
                 X_new.append(temp)
             X_val = np.array(X_new)
             X_new = []
             for i in range(len(X_test)):
-                plfold_name = ""
                 a = str(chr_test[i])[2:-2]
                 b = str(pos_test[i] - 140)
                 c = str(pos_test[i] + 110)
@@ -244,7 +251,6 @@ def get_data(path, min_read=2000, add_RNAplfold=False, export_np_arr=False, load
                 with open(path + "/plfold/test_plfold/" + plfold_name) as source:
                     pl_test = np.array(list(source))
                 pl_test = pl_test.astype(float)
-                # pl_train = pd.read_csv(path + '/test_plfold/' + plfold_name).to_numpy()
                 temp = X_test[i]
                 temp = np.column_stack((temp, pl_test))
                 X_new.append(temp)
@@ -261,6 +267,8 @@ def get_data(path, min_read=2000, add_RNAplfold=False, export_np_arr=False, load
 
         if add_evolution:
             folder = folder + "_evo"
+        if bartel:
+            folder = folder + "_bar"
 
         np.save(path + folder + "/X_train.npy", X_train)
         np.save(path + folder + "/y_train.npy", y_train)
@@ -278,12 +286,19 @@ def get_data(path, min_read=2000, add_RNAplfold=False, export_np_arr=False, load
             np.save(path + folder + "/mfe_val.npy", mfe_val)
             np.save(path + folder + "/mfe_test.npy", mfe_test)
             np.save(path + folder + "/mfe_train.npy", mfe_train)
+        if bartel:
+            np.save(path + folder + "/X_bartel.npy",X_bartel)
+            np.save(path + folder + "/Y_bartel.npy",Y_bartel)
 
     if add_mfe:
-        return [X_train, y_train, w_train, mfe_train], [X_test, y_test, w_test, mfe_test], [X_val, y_val, w_val,
+        return [X_train, y_train, mfe_train], [X_test, y_test, mfe_test], [X_val, y_val,
                                                                                             mfe_val]
+    elif bartel:
+        X_train_test = np.concatenate((X_train,X_test))
+        y_train_test = np.concatenate((y_train,y_test))
+        return [X_train_test, y_train_test], [X_val, y_val], [X_bartel, Y_bartel]
     else:
-        return [X_train, y_train, w_train], [X_test, y_test, w_test], [X_val, y_val, w_val]
+        return [X_train, y_train], [X_test, y_test], [X_val, y_val]
 
 
 def get_headline(headline):
@@ -297,17 +312,17 @@ def get_headline(headline):
 
 def trim_mat(data, INPUT_SIZE, mfe=False):
     if mfe:
-        [X_Data, Y_Data, W_Data, mfe_Data] = data
+        [X_Data, Y_Data, mfe_Data] = data
     else:
-        [X_Data, Y_Data, W_Data] = data
+        [X_Data, Y_Data] = data
     total_data_size = X_Data.shape[1]
     start = total_data_size // 2 - INPUT_SIZE // 2
     end = start + INPUT_SIZE
     X_Data = X_Data[:, start:end, :]
     if mfe:
-        data = [X_Data, Y_Data, W_Data, mfe_Data]
+        data = [X_Data, Y_Data, mfe_Data]
     else:
-        data = [X_Data, Y_Data, W_Data]
+        data = [X_Data, Y_Data]
     return data
 
 
@@ -322,22 +337,23 @@ class HyperParams:
         self.activations_list = ['relu', 'sigmoid', 'relu']
         self.batch_size_list = [16, 32, 64, 128]
         self.epochs_list = [x for x in range(3, 20)]
-        self.INPUT_SIZE = 100
-        self.FILTER = 32
-        self.KERNEL_SIZE = 42
+        self.INPUT_SIZE = 120
+        self.FILTER = 64
+        self.KERNEL_SIZE = 16
         self.POOLING = 1
         self.POOL_SIZE = 4
-        self.DENCE_1 = 64
-        self.DENCE_2 = 16
+        self.DENCE_1 = 56
+        self.DENCE_2 = 52
         self.ACTIVATION_1 = 'relu'
         self.ACTIVATION_2 = 'relu'
-        self.DROPOUT_1 = 0.3
-        self.DROPOUT_2 = 0.1
-        self.TF_SEED = 1
+        self.DROPOUT_1 = 0.0
+        self.DROPOUT_2 = 0.4
+        self.TF_SEED = 1210
         self.EPOCH = 10
-        self.BATCH_SIZE = 64
+        self.BATCH_SIZE = 24
         self.CONV_PADDING = "valid"
-        self.path = "./hparams/hyper_params.csv"
+        self.path = "./hparams/hyper_params1.csv"
+        self.path = "./hparams/noseeds_sorted.csv"
 
     def rand_params(self):
         self.INPUT_SIZE = np.random.choice(self.input_size_list)
@@ -371,7 +387,7 @@ class HyperParams:
         print("BATCH_SIZE = ", self.BATCH_SIZE)
 
     def load_params(self, max=True, idx=0):
-        Pearson_cor = pd.read_csv(self.path, usecols=['pearson correlation']).to_numpy()
+        Pearson_cor = pd.read_csv(self.path, usecols=['pearson_correlation_val_seq']).to_numpy()
         max_idx = np.argmax(Pearson_cor)
         INPUT_SIZE = pd.read_csv(self.path, usecols=['INPUT_SIZE']).to_numpy()
         FILTER = pd.read_csv(self.path, usecols=['FILTER']).to_numpy()
@@ -392,19 +408,48 @@ class HyperParams:
             read_idx = max_idx
         else:
             read_idx = idx
-        self.INPUT_SIZE = np.asscalar(INPUT_SIZE[read_idx])
-        self.FILTER = np.asscalar(FILTER[read_idx])
-        self.KERNEL_SIZE = np.asscalar(KERNEL_SIZE[read_idx])
-        self.POOL_SIZE = np.asscalar(POOL_SIZE[read_idx])
-        self.DENCE_1 = np.asscalar(DENCE_1[read_idx])
-        self.DENCE_2 = np.asscalar(DENCE_2[read_idx])
+        self.INPUT_SIZE = int(INPUT_SIZE[read_idx][0])
+        self.FILTER = int(FILTER[read_idx][0])
+        self.KERNEL_SIZE = int(KERNEL_SIZE[read_idx][0])
+        self.POOL_SIZE = int(POOL_SIZE[read_idx][0])
+        self.DENCE_1 = int(DENCE_1[read_idx][0])
+        self.DENCE_2 = int(DENCE_2[read_idx][0])
         self.ACTIVATION_1 = str((ACTIVATION_1[read_idx])[0])
         self.ACTIVATION_2 = str((ACTIVATION_2[read_idx])[0])
-        self.DROPOUT_1 = np.asscalar(DROPOUT_1[read_idx])
-        self.DROPOUT_2 = np.asscalar(DROPOUT_2[read_idx])
-        self.TF_SEED = np.asscalar(TF_SEED[read_idx])
-        self.EPOCH = np.asscalar(EPOCH[read_idx])
-        self.BATCH_SIZE = np.asscalar(BATCH_SIZE[read_idx])
+        self.DROPOUT_1 = float(DROPOUT_1[read_idx][0])
+        self.DROPOUT_2 = float(DROPOUT_2[read_idx][0])
+        # self.TF_SEED = TF_SEED.astype(float)[read_idx]
+        self.EPOCH = int(EPOCH[read_idx][0])
+        self.BATCH_SIZE = int(BATCH_SIZE[read_idx][0])
+
+        # self.INPUT_SIZE = INPUT_SIZE[read_idx].item()
+        # self.FILTER = FILTER[read_idx].item()
+        # self.KERNEL_SIZE = KERNEL_SIZE[read_idx].item()
+        # self.POOL_SIZE = POOL_SIZE[read_idx].item()
+        # self.DENCE_1 = DENCE_1[read_idx].item()
+        # self.DENCE_2 = DENCE_2[read_idx].item()
+        # self.ACTIVATION_1 = str((ACTIVATION_1[read_idx])[0])
+        # self.ACTIVATION_2 = str((ACTIVATION_2[read_idx])[0])
+        # self.DROPOUT_1 = DROPOUT_1[read_idx].item()
+        # self.DROPOUT_2 = DROPOUT_2[read_idx].item()
+        # self.TF_SEED = TF_SEED[read_idx].item()
+        # self.EPOCH = EPOCH[read_idx].item()
+        # self.BATCH_SIZE = BATCH_SIZE[read_idx].item()
+
+
+        # self.INPUT_SIZE = np.asscalar(INPUT_SIZE[read_idx])
+        # self.FILTER = np.asscalar(FILTER[read_idx])
+        # self.KERNEL_SIZE = np.asscalar(KERNEL_SIZE[read_idx])
+        # self.POOL_SIZE = np.asscalar(POOL_SIZE[read_idx])
+        # self.DENCE_1 = np.asscalar(DENCE_1[read_idx])
+        # self.DENCE_2 = np.asscalar(DENCE_2[read_idx])
+        # self.ACTIVATION_1 = str((ACTIVATION_1[read_idx])[0])
+        # self.ACTIVATION_2 = str((ACTIVATION_2[read_idx])[0])
+        # self.DROPOUT_1 = np.asscalar(DROPOUT_1[read_idx])
+        # self.DROPOUT_2 = np.asscalar(DROPOUT_2[read_idx])
+        # self.TF_SEED = np.asscalar(TF_SEED[read_idx])
+        # self.EPOCH = np.asscalar(EPOCH[read_idx])
+        # self.BATCH_SIZE = np.asscalar(BATCH_SIZE[read_idx])
 
     def save_params(self):
         to_add = [self.INPUT_SIZE, self.FILTER, self.KERNEL_SIZE, self.POOL_SIZE, self.DENCE_1, self.DENCE_2,
@@ -474,7 +519,7 @@ def update_results_params(i=0, hparams=HyperParams()):
     Results_pd.at[i, 'CONV_PADDING'] = hparams.CONV_PADDING
 
 
-def predict_results(predictions=None, Y=None):
+def eval_results(predictions=None, Y=None):
 # def predict_results(model=Sequential(), X=None, Y=None):
     # predictions = model.predict(X, batch_size=len(X))  # Batch_Size defualt is 32
     # predictions = predictions.reshape(len(predictions))  # Reshape pred_val
@@ -482,7 +527,7 @@ def predict_results(predictions=None, Y=None):
     # predictions = predictions.reshape(len(predictions))  # Reshape pred
     [pearson, p_value] = pearsonr(Y, predictions)
     mse = np.mean(np.square(Y - predictions))
-    return [pearson, p_value, mse]
+    return [pearson[0], p_value, mse]
 
 
 
@@ -516,14 +561,7 @@ Data_run_list = params.Data_run_list
 Save_Results = params.Save_Results
 Use_Test = params.Use_Test
 
-if Cloud_run:
-
-    # path = "/home/u110379/RG4_Proj/rg4_data"
-    # path = "/home/u93513/V1/rg4_data" ofer
-    # path = "~/RG4_Proj/rg4_data"
-    path = "./rg4_data"
-else:
-    path = "./rg4_data"
+path = "./rg4_data"
 
 if Debug:
     name = "debug"
@@ -549,19 +587,21 @@ os.makedirs(CSV_Path, exist_ok=True)
 # ---------------------------------------------- Read data---------------------------------------------------------------
 if 'seq' in Data_run_list:
     train, test, validation = get_data(path, load_np_arr=True, add_RNAplfold=False, export_np_arr=False,
-                                       add_evolution=False, add_mfe=False)
-
+                                       add_evolution=False, add_mfe=False, bartel=False)
+if 'bar' in Data_run_list:
+    train_test, validation ,bartel_all = get_data(path, load_np_arr=True, add_RNAplfold=False, export_np_arr=False,
+                                       add_evolution=False, add_mfe=False, bartel=True)
 if 'mfe' in Data_run_list:
     train_mfe, test_mfe, validation_mfe = get_data(path, load_np_arr=True, add_RNAplfold=False, export_np_arr=False,
-                                                   add_evolution=False, add_mfe=True)
+                                                   add_evolution=False, add_mfe=True, bartel=False)
 
 if 'evo' in Data_run_list:
     train_evo, test_evo, validation_evo = get_data(path, load_np_arr=True, add_RNAplfold=False, export_np_arr=False,
-                                                   add_evolution=True, add_mfe=False)
+                                                   add_evolution=True, add_mfe=False, bartel=False)
 
 if 'plfold' in Data_run_list:
     train_pl, test_pl, validation_pl = get_data(path, load_np_arr=True, add_RNAplfold=True, export_np_arr=True,
-                                                add_evolution=False, add_mfe=False)
+                                                add_evolution=False, add_mfe=False, bartel=False)
 
 
 # ---------------------------------------------- Main -------------------------------------------------------------------
@@ -574,7 +614,7 @@ def main(param_scan=True, Seed_scan=False):
             hparams.rand_params()
 
         if Seed_scan:
-            hparams.load_params(max=True)  # Load parmas from CSV
+            hparams.load_params(max=False, idx=i+1)  # Load parmas from CSV
             hparams.TF_SEED = np.random.randint(10000)  # Randomize Seed
 
         if Debug:
@@ -586,32 +626,38 @@ def main(param_scan=True, Seed_scan=False):
             TF_SEED_LIST.append(np.random.randint(10000))
         TF_SEED_LIST_STR = ''
         for s in TF_SEED_LIST:
-            TF_SEED_LIST_STR += (str(s)+',')
+            TF_SEED_LIST_STR += (str(s)+'_')
         hparams.TF_SEED = TF_SEED_LIST_STR
         # add them to Pandas
         update_results_params(i, hparams)
 
         # Trim Data
         if 'seq' in Data_run_list:
-            [X_train, Y_train, W_train] = trim_mat(train, hparams.INPUT_SIZE)
-            [X_test, Y_test, W_test] = trim_mat(test, hparams.INPUT_SIZE)
-            [X_validation, Y_validation, W_validation] = trim_mat(validation, hparams.INPUT_SIZE)
+            [X_train, Y_train] = trim_mat(train, hparams.INPUT_SIZE)
+            [X_test, Y_test] = trim_mat(test, hparams.INPUT_SIZE)
+            [X_validation, Y_validation] = trim_mat(validation, hparams.INPUT_SIZE)
 
         if 'mfe' in Data_run_list:
-            [X_train_mfe, Y_train_mfe, W_train_mfe, mfe_train] = trim_mat(train_mfe, hparams.INPUT_SIZE, mfe=True)
-            [X_test_mfe, Y_test_mfe, W_test_mfe, mfe_test] = trim_mat(test_mfe, hparams.INPUT_SIZE, mfe=True)
-            [X_validation_mfe, Y_validation_mfe, W_validation_mfe, mfe_val] = trim_mat(validation_mfe,
-                                                                                       hparams.INPUT_SIZE, mfe=True)
+            [X_train_mfe, Y_train_mfe, mfe_train] = trim_mat(train_mfe, hparams.INPUT_SIZE)
+            [X_test_mfe, Y_test_mfe, mfe_test] = trim_mat(test_mfe, hparams.INPUT_SIZE)
+            [X_validation_mfe, Y_validation_mfe, mfe_val] = trim_mat(validation_mfe,
+                                                                                       hparams.INPUT_SIZE)
 
         if 'evo' in Data_run_list:
-            [X_train_evo, Y_train_evo, W_train_evo] = trim_mat(train_evo, hparams.INPUT_SIZE)
-            [X_test_evo, Y_test_evo, W_test_evo] = trim_mat(test_evo, hparams.INPUT_SIZE)
-            [X_validation_evo, Y_validation_evo, W_validation_evo] = trim_mat(validation_evo, hparams.INPUT_SIZE)
+            [X_train_evo, Y_train_evo] = trim_mat(train_evo, hparams.INPUT_SIZE)
+            [X_test_evo, Y_test_evo] = trim_mat(test_evo, hparams.INPUT_SIZE)
+            [X_validation_evo, Y_validation_evo] = trim_mat(validation_evo, hparams.INPUT_SIZE)
 
         if 'plfold' in Data_run_list:
-            [X_train_pl, Y_train_pl, W_train_pl] = trim_mat(train_pl, hparams.INPUT_SIZE)
-            [X_test_pl, Y_test_pl, W_test_pl] = trim_mat(test_pl, hparams.INPUT_SIZE)
-            [X_validation_pl, Y_validation_pl, W_validation_pl] = trim_mat(validation_pl, hparams.INPUT_SIZE)
+            [X_train_pl, Y_train_pl] = trim_mat(train_pl, hparams.INPUT_SIZE)
+            [X_test_pl, Y_test_pl] = trim_mat(test_pl, hparams.INPUT_SIZE)
+            [X_validation_pl, Y_validation_pl] = trim_mat(validation_pl, hparams.INPUT_SIZE)
+
+        if 'bar' in Data_run_list:
+            [X_train_test, Y_train_test] = trim_mat(train_test, hparams.INPUT_SIZE)
+            [X_val, Y_val] = trim_mat(validation, hparams.INPUT_SIZE)
+            [X_bartel, Y_bartel] = trim_mat(bartel_all, hparams.INPUT_SIZE)
+
 
         for data_type in Data_run_list:
             # prepare the data to be trained on:
@@ -623,7 +669,6 @@ def main(param_scan=True, Seed_scan=False):
                 X_TEST = [X_test_mfe, mfe_test]
                 Y_TEST = Y_test_mfe
                 mfe_shape = mfe_train.shape[1:]
-                data_shape = X_train_mfe.shape[1:]
             elif data_type == 'seq':
                 X_TRAIN = X_train
                 Y_TRAIN = Y_train
@@ -631,7 +676,6 @@ def main(param_scan=True, Seed_scan=False):
                 Y_VAL = Y_validation
                 X_TEST = X_test
                 Y_TEST = Y_test
-                data_shape = X_train.shape[1:]
             elif data_type == 'evo':
                 X_TRAIN = X_train_evo
                 Y_TRAIN = Y_train_evo
@@ -639,7 +683,6 @@ def main(param_scan=True, Seed_scan=False):
                 Y_VAL = Y_validation_evo
                 X_TEST = X_test_evo
                 Y_TEST = Y_test_evo
-                data_shape = X_train_evo.shape[1:]
             elif data_type == 'plfold':
                 X_TRAIN = X_train_pl
                 Y_TRAIN = Y_train_pl
@@ -647,7 +690,28 @@ def main(param_scan=True, Seed_scan=False):
                 Y_VAL = Y_validation_pl
                 X_TEST = X_test_pl
                 Y_TEST = Y_test_pl
-                data_shape = X_train_pl.shape[1:]
+            elif data_type == 'bar':
+                X_TRAIN = X_train_test
+                Y_TRAIN = Y_train_test
+                X_VAL = X_val
+                Y_VAL = Y_val
+                X_TEST = X_bartel
+                Y_TEST = Y_bartel
+
+            data_shape = X_TRAIN.shape[1:]
+            if data_shape[0]==None:
+                print('none')
+                continue
+
+
+            # elif data_type == 'from_bartel':
+            #     X_TRAIN = np.concatenate((X_train_bartel,X_test_bartel), axis=0)
+            #     Y_TRAIN = np.concatenate((Y_train_bartel,Y_test_bartel), axis=0)
+            #     X_VAL = X_val_bartel
+            #     Y_VAL = Y_val_bartel
+            #     X_TEST = np.concatenate((X_train,X_test,X_validation),axis=0)
+            #     Y_TEST = np.concatenate((Y_train,Y_test,Y_validation),axis=0)
+            #     data_shape = X_train.shape[1:]
 
             # Reset Lists for Averging over TF Seeds
             loss_list = []
@@ -678,7 +742,7 @@ def main(param_scan=True, Seed_scan=False):
                     model = build_seq_model(hparams=hparams, Load_model=False, input_shape=data_shape)
 
                 if Debug:
-                    hparams.EPOCH = 1
+                    hparams.EPOCH = 10
 
                 # Train Model
 
@@ -704,7 +768,7 @@ def main(param_scan=True, Seed_scan=False):
             Avg_loss = np.average(loss_list, axis=0)  # Average done on Axis 0 meaning on all first elements etc
             Avg_val_loss = np.average(val_loss_list, axis=0)
             predictions = np.average(predictions_list, axis=0)
-            [pearson_cor, p_value, mse] = predict_results(predictions,Y_VAL)
+            [pearson_cor, p_value, mse] = eval_results(predictions,Y_VAL)
 
             # Update results Data frame Validation :
             Results_pd.at[i, 'pearson_correlation_val_' + data_type] = pearson_cor
@@ -715,7 +779,7 @@ def main(param_scan=True, Seed_scan=False):
                 # Average from all AVG_TF_SEED_PER Test:
                 # Update results Data frame Test :
                 predictions_test = np.average(predictions_list_test, axis=0)
-                [pearson_cor_test, p_value_test, mse_test] = predict_results(predictions_test,Y_TEST)
+                [pearson_cor_test, p_value_test, mse_test] = eval_results(predictions_test,Y_TEST)
                 Results_pd.at[i, 'loss_mse_test_' + data_type] = mse_test
                 Results_pd.at[i, 'pearson_correlation_test_' + data_type] = pearson_cor_test
                 Results_pd.at[i, 'p_value_test_' + data_type] = p_value_test
@@ -743,14 +807,14 @@ def main(param_scan=True, Seed_scan=False):
                     print("Average loss_mse_test_" + data_type + " : " + str(
                         Results_pd.at[i, 'p_value_test_' + data_type]))
 
-        # if (Save_Results ):
-        if (Save_Results and i%10 ==0):
+        if (Save_Results ):
+        # if (Save_Results and i%10 ==0):
             filename_csv = CSV_Path + "Run_idx_" + str(runidx) + ".csv"
             Results_pd.to_csv(filename_csv)
             print("Last Version Saved with " + str(i) + " Interations")
 
 
 if __name__ == "__main__":
-    main(Seed_scan=False, param_scan=True)
+    # main(Seed_scan=False, param_scan=True)
     print("Done with param scan")
-    # main(Seed_scan=True,param_scan=False)
+    main(Seed_scan=True,param_scan=False)
